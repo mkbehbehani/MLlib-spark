@@ -11,7 +11,7 @@ object TermAnalyzer {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val shakespeareFiles: RDD[(String, String)] = sc.wholeTextFiles(System.getProperty("user.dir") + "/shakespeare")
-    val counts = shakespeareFiles.map(tup => (FilenameUtils.getBaseName(tup._1), tup._2.split("\\W"))).map(tup => (tup._1, tup._2.map((_,tup._1)))).flatMap(_._2)
+    val termAndFiles = shakespeareFiles.map(tup => (FilenameUtils.getBaseName(tup._1), tup._2.split("\\W"))).map(tup => (tup._1, tup._2.map((_,tup._1)))).flatMap(_._2).distinct().groupByKey()
 //      val historiesCount =
 //      .map(tup => (tup._1, sc.parallelize(tup._2)).map(tup => (tup._1, tup._2.reduceByKey(_+_)))
 
@@ -21,7 +21,7 @@ object TermAnalyzer {
     //      val termInstances: Array[(String, Int)] = (fileCollection: org.apache.spark.rdd.RDD[(String, String)]) => fileCollection.map(_._2).flatMap(_.split("\\W")).map((_, 1)).reduceByKey({ case (x, y) => x + y })
     //    val reducedCounts = sc.parallelize(counts.map(tup => (tup._1, tup._2.reduceByKey({ case (x, y) => x + y }))))
 
-    counts.coalesce(1,true).saveAsTextFile(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString)
+    termAndFiles.coalesce(1).saveAsTextFile(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString)
     sc.stop()
   }
 }
