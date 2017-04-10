@@ -11,7 +11,7 @@ object TermAnalyzer {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val shakespeareFiles: RDD[(String, String)] = sc.wholeTextFiles(System.getProperty("user.dir") + "/shakespeare")
-    val termAndFiles = shakespeareFiles.map(tup => (FilenameUtils.getBaseName(tup._1), tup._2.split("\\W"))).map(tup => (tup._1, tup._2.map((_,tup._1)))).flatMap(_._2).distinct().groupByKey()
+    val termAndFiles = shakespeareFiles.map(tup => (FilenameUtils.getBaseName(tup._1), tup._2.split("\\W"))).map(tup => (tup._1, tup._2.map((_,tup._1)))).flatMap(_._2).distinct().groupByKey().map(tup=>(tup._1, tup._2.mkString("[",",", "]")))
 //      val historiesCount =
 //      .map(tup => (tup._1, sc.parallelize(tup._2)).map(tup => (tup._1, tup._2.reduceByKey(_+_)))
 
