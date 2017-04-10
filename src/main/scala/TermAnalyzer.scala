@@ -9,14 +9,20 @@ object TermAnalyzer {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
     val shakespeareFiles: RDD[(String, String)] = sc.wholeTextFiles(System.getProperty("user.dir") + "/shakespeare")
-    val termsAndFiles = shakespeareFiles
-                       .map(tup => (FilenameUtils.getBaseName(tup._1), tup._2.split("\\W"))) // For each file, extract the filename and split the entire textfile into a collection of individual words
-                       .map(tup => (tup._1, tup._2.map((_,tup._1)))) // For every word in the file, create a (word, filename) tuple
-                       .flatMap(_._2) // Discard the filename key, leaving us with (word, filename) tuples
-                       .map(tup => (tup._1.toLowerCase, tup._2)) // Convert all words to lowercase
-                       .distinct()  // Deduplicate file occurrences
-                       .groupByKey() // Group filename occurrences into a tuple of (word, (file1, file2, file3..))
-                       .map(tup=>(tup._1, tup._2.mkString("[",",", "]"))) // Format the file output
+    val termsAndFiles = shakespeareFiles.map(t => (FilenameUtils.getBaseName(t._1), t._2.split("\\W")))
+      .map(t => (t._1, t._2.map((_,t._1))))
+      .flatMap(_._2)
+      .map(t => (t._1.toLowerCase, t._2))
+      .groupByKey()
+      .map(t => (t._1, t._2.map((_,1))))
+      .map(l=>(l._1, l._2.foldLeft(List[(String, Int)]())((accum, curr)=>{ // array reduction, from this stack overflow: http://stackoverflow.com/questions/30089646/spark-use-reducebykey-on-nested-structure
+        val accumAsMap = accum.toMap
+        accumAsMap.get(curr._1) match {
+          case Some(value : Int) => (accumAsMap + (curr._1 -> (value + curr._2))).toList
+          case None => curr :: accum
+        }
+      })))
+      .map(t=>(t._1, t._2.mkString("[",",", "]"))) // Format the file output
     termsAndFiles.coalesce(1).saveAsTextFile(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString)
     sc.stop()
   }
