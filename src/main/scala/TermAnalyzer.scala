@@ -1,8 +1,6 @@
+import java.util.Calendar
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
-import org.apache.spark.SparkContext._
-import java.util.Calendar
-import org.apache.commons.io.FilenameUtils
 
 object TermAnalyzer {
   def main(args: Array[String]) {
@@ -24,11 +22,11 @@ object TermAnalyzer {
     "whom", "why", "whys", "with", "wont", "would", "wouldnt", "you", "youd", "youll", "youre", "youve", "your",
     "yours", "yourself", "yourselves")
 
-    val termsAndFiles = shakespeareFiles.flatMap(_._2.split("\\r?\\n"))
-      .map(s =>(s.split(":::")(1).split("::")(0), s.toLowerCase.split(":::")(2).split("::")(0).split("\\W").filter(_.length > 2).filter(!stopWords.contains(_))))
-      .map(t => (t._1, t._2.map((t._1, _)))).flatMap(_._2)
-      .groupByKey()
-      .map(t => (t._1, t._2.map((_,1))))
+    val termsAndFiles = shakespeareFiles.flatMap(_._2.split("\\r?\\n")) // split each file's contents by line
+      .map(s =>(s.split(":::")(1).split("::")(0), s.toLowerCase.split(":::")(2).split("::")(0).split("\\W").filter(_.length > 2).filter(!stopWords.contains(_)))) // extract (author, [word1, word2, word3]), words filtered for stopwords and length
+      .map(t => (t._1, t._2.map((t._1, _)))).flatMap(_._2) // create (author, word) tuples for every word
+      .groupByKey()  // Group word occurrences into a tuple of (author, (file1, file2, file3..))
+      .map(t => (t._1, t._2.map((_,1))))  // create tuples of (filename, 1)
       .map(l=>(l._1, l._2.foldLeft(List[(String, Int)]())((accum, curr)=>{ // array reduction, from this stack overflow: http://stackoverflow.com/questions/30089646/spark-use-reducebykey-on-nested-structure
         val accumAsMap = accum.toMap
         accumAsMap.get(curr._1) match {
