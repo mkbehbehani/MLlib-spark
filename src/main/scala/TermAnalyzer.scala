@@ -6,6 +6,15 @@ object TermAnalyzer {
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
+
+    val sqlContext = new org.apache.spark.sql.SQLContext(sc)
+    val df = sqlContext.read
+      .format("com.databricks.spark.csv")
+      .option("delimiter", ";")
+      .option("header", "true") // Use first line of all files as header
+      .option("inferSchema", "true") // Automatically infer data types
+      .load("hwdata/winequality-white.csv")
+
     val shakespeareFiles: RDD[(String, String)] = sc.wholeTextFiles(System.getProperty("user.dir") + "/hw3data")
     val stopWords = List("about", "above", "after", "again", "against", "all", "am", "an", "and", "any",
     "are", "arent", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but",
@@ -35,7 +44,7 @@ object TermAnalyzer {
         }
       })))
      .map(t=>(t._1, t._2.mkString("[",",", "]"))) // Format the file output
-    termsAndFiles.coalesce(1).saveAsTextFile(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString)
+    df.show
     sc.stop()
   }
 }
