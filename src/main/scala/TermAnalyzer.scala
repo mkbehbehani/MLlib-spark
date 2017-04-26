@@ -1,17 +1,16 @@
-import java.util.Calendar
 import java.io._
+import java.util.Calendar
+
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.mllib.tree.DecisionTree
-import org.apache.spark.mllib.tree.model.DecisionTreeModel
-import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.{SparkConf, SparkContext}
 
 object TermAnalyzer {
   def main(args: Array[String]) {
     val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
     val sc = new SparkContext(conf)
-    val wineData = sc.textFile("/home/mashallah/IdeaProjects/spark-machine-learning-scala/hwdata/winequality-white.csv")
+    val wineData = sc.textFile("hwdata/winequality-white.csv")
     val parsedWineData = wineData.flatMap(_.split("\\n")).map(_.split(";")).map( _.map{y => y.toDouble}).map(y => LabeledPoint(y.last, Vectors.dense(y.slice(0, y.length-1))))
     val splits = parsedWineData.randomSplit(Array(0.7, 0.3))
     val (trainingData, testData) = (splits(0), splits(1))
