@@ -8,7 +8,7 @@ import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.max
 
-object TermAnalyzer {
+object WineAnalyzer {
 
   def main(args: Array[String]): Unit = {
     val spark = SparkSession
@@ -50,7 +50,8 @@ object TermAnalyzer {
 
     val featurizedData = assembler.transform(df)
     val output = featurizedData.withColumnRenamed("quality", "label")
-    output.show
+    val classificationDF = output.select("label", "features")
+    classificationDF.show
 
     val training = spark.read.format("libsvm").load("/home/mashallah/IdeaProjects/MLlib-spark/hwdata/sample_libsvm_data.txt")
 

@@ -1,2 +1,2 @@
-# spark-scala-term-analyzer
-Spark project for analyzing term occurrances across files
+# MLlib-spark
+Spark project for predicting wine quality, using Spark 2.1.x pipeline techniques
