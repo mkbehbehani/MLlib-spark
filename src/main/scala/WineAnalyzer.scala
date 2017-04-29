@@ -53,7 +53,7 @@ object WineAnalyzer {
     val classificationDF = output.select("label", "features")
     classificationDF.show
 
-    val training = spark.read.format("libsvm").load("/home/mashallah/IdeaProjects/MLlib-spark/hwdata/sample_libsvm_data.txt")
+    val training = spark.read.format("libsvm").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/sample_libsvm_data.txt")
 
 
     val lr = new LogisticRegression()
