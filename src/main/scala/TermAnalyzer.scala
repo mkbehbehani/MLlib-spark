@@ -1,50 +1,97 @@
-import java.io._
 import java.util.Calendar
 
-import org.apache.spark.mllib.linalg.Vectors
-import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.tree.DecisionTree
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.ml.classification.{BinaryLogisticRegressionSummary, LogisticRegression}
+import org.apache.spark.ml.feature.LabeledPoint
+import org.apache.spark.mllib.classification.LogisticRegressionWithLBFGS
+import org.apache.spark.mllib.util.MLUtils
+import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
+import org.apache.spark.sql.SparkSession
+import org.apache.spark.sql.functions.max
 
 object TermAnalyzer {
-  def main(args: Array[String]) {
-    val conf = new SparkConf().setAppName("Simple Application").setMaster("local[*]")
-    val sc = new SparkContext(conf)
-    val wineData = sc.textFile("hwdata/winequality-white.csv")
-    val parsedWineData = wineData.flatMap(_.split("\\n")).map(_.split(";")).map( _.map{y => y.toDouble}).map(y => LabeledPoint(y.last, Vectors.dense(y.slice(0, y.length-1))))
-    val splits = parsedWineData.randomSplit(Array(0.7, 0.3))
-    val (trainingData, testData) = (splits(0), splits(1))
+
+  def main(args: Array[String]): Unit = {
+    val spark = SparkSession
+      .builder
+      .master("local[*]")
+      .appName("PipelineExample")
+      .getOrCreate()
+
+    val customSchema = StructType(Array(
+      StructField("fixed acidity", DoubleType, true),
+      StructField("volatile acidity", DoubleType, true),
+      StructField("citric acid", DoubleType, true),
+      StructField("residual sugar", DoubleType, true),
+      StructField("chlorides", DoubleType, true),
+      StructField("free sulfur dioxide", DoubleType, true),
+      StructField("total sulfur dioxide", DoubleType, true),
+      StructField("density", DoubleType, true),
+      StructField("pH", DoubleType, true),
+      StructField("sulphates", DoubleType, true),
+      StructField("alcohol", DoubleType, true),
+      StructField("quality", DoubleType, true)
+    ))
+
+    val df = spark.read.format("com.databricks.spark.csv").schema(customSchema).option("delimiter", ";").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/hwdata/winequality-white.csv")
+    import spark.implicits._
 
 
-    // Train a DecisionTree model.
-    //  Empty categoricalFeaturesInfo indicates all features are continuous.
-    val categoricalFeaturesInfo = Map[Int, Int]()
-    val impurity = "variance"
-    val maxDepth = 5
-    val maxBins = 32
+    val training = spark.read.format("libsvm").load("/home/mashallah/IdeaProjects/MLlib-spark/hwdata/sample_libsvm_data.txt")
 
-    val model = DecisionTree.trainRegressor(trainingData, categoricalFeaturesInfo, impurity,
-      maxDepth, maxBins)
+    val lr = new LogisticRegression()
+      .setMaxIter(10)
+      .setRegParam(0.3)
+      .setElasticNetParam(0.8)
 
-    // Evaluate model on test instances and compute test error
-    val labelsAndPredictions = testData.map { point =>
-      val prediction = model.predict(point.features)
-      (point.label, prediction)
-    }
-    val testMSE = labelsAndPredictions.map{ case (v, p) => math.pow(v - p, 2) }.mean()
-    val mseResults = "Test Mean Squared Error = " + testMSE
-    val regressionModelResults = "Learned regression tree model:\n" + model.toDebugString
+    // Fit the model
+    val lrModel = lr.fit(training)
 
-    val resultOutput:String = mseResults + regressionModelResults
-    val results = sc.parallelize(resultOutput)
+    // Print the coefficients and intercept for logistic regression
+    println(s"Coefficients: ${lrModel.coefficients} Intercept: ${lrModel.intercept}")
 
-    // Save and load model
-    model.save(sc, "target/tmp/" + Calendar.getInstance().getTime.toString + "myDecisionTreeRegressionModel")
+    // We can also use the multinomial family for binary classification
+    val mlr = new LogisticRegression()
+      .setMaxIter(10)
+      .setRegParam(0.3)
+      .setElasticNetParam(0.8)
+      .setFamily("multinomial")
 
-    val pw = new PrintWriter(new File(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString))
-    pw.write(resultOutput)
-    pw.close
-    sc.stop()
+    val mlrModel = mlr.fit(training)
+
+    // Print the coefficients and intercepts for logistic regression with multinomial family
+    println(s"Multinomial coefficients: ${mlrModel.coefficientMatrix}")
+    println(s"Multinomial intercepts: ${mlrModel.interceptVector}")
+
+    // Extract the summary from the returned LogisticRegressionModel instance trained in the earlier
+    // example
+    val trainingSummary = lrModel.summary
+
+    // Obtain the objective per iteration.
+    val objectiveHistory = trainingSummary.objectiveHistory
+    println("objectiveHistory:")
+    objectiveHistory.foreach(loss => println(loss))
+
+    // Obtain the metrics useful to judge performance on test data.
+    // We cast the summary to a BinaryLogisticRegressionSummary since the problem is a
+    // binary classification problem.
+    val binarySummary = trainingSummary.asInstanceOf[BinaryLogisticRegressionSummary]
+
+    // Obtain the receiver-operating characteristic as a dataframe and areaUnderROC.
+    val roc = binarySummary.roc
+    roc.show()
+    roc.coalesce(1).write.option("header", "true").csv(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString + "/sample_file.csv")
+    println(s"areaUnderROC: ${binarySummary.areaUnderROC}")
+
+    // Set the model threshold to maximize F-Measure
+    val fMeasure = binarySummary.fMeasureByThreshold
+    val maxFMeasure = fMeasure.select(max("F-Measure")).head().getDouble(0)
+    val bestThreshold = fMeasure.where($"F-Measure" === maxFMeasure)
+      .select("threshold").head().getDouble(0)
+    lrModel.setThreshold(bestThreshold)
+    val resultOutput = s"Coefficients: ${lrModel.coefficients} " +
+                       s"Intercept: ${lrModel.intercept}"
+
+
   }
-
 }
+// scalastyle:on println
