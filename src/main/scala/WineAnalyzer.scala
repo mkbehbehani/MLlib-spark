@@ -17,44 +17,36 @@ object WineAnalyzer {
       .appName("PipelineExample")
       .getOrCreate()
 
-    val customSchema = StructType(Array(
-      StructField("fixed acidity", DoubleType, true),
-      StructField("volatile acidity", DoubleType, true),
-      StructField("citric acid", DoubleType, true),
-      StructField("residual sugar", DoubleType, true),
-      StructField("chlorides", DoubleType, true),
-      StructField("free sulfur dioxide", DoubleType, true),
-      StructField("total sulfur dioxide", DoubleType, true),
-      StructField("density", DoubleType, true),
-      StructField("pH", DoubleType, true),
-      StructField("sulphates", DoubleType, true),
-      StructField("alcohol", DoubleType, true),
-      StructField("quality", DoubleType, true)
-    ))
+    val df = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/train.csv").na.drop
 
-    val df = spark.read.format("com.databricks.spark.csv").schema(customSchema).option("delimiter", ";").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/hwdata/winequality-white.csv")
+    val fields = df.schema.fields filter {
+      x => x.dataType match {
+        case x: org.apache.spark.sql.types.StringType => true
+        case _ => false
+      }
+    } map { x => x.name }
 
+    val noStringDf = fields.foldLeft(df){ case(dframe,field) => dframe.drop(field) }
+
+    val labelColumn = noStringDf.columns.reverse.head
+    val featureColumns = noStringDf.columns.tail
     val assembler = new VectorAssembler()
-      .setInputCols(Array("fixed acidity",
-        "volatile acidity",
-        "citric acid",
-        "residual sugar",
-        "chlorides",
-        "free sulfur dioxide",
-        "total sulfur dioxide",
-        "density",
-        "pH",
-        "sulphates",
-        "alcohol"))
+      .setInputCols(featureColumns)
       .setOutputCol("features")
 
-    val featurizedData = assembler.transform(df)
-    val output = featurizedData.withColumnRenamed("quality", "label")
+    val featurizedData = assembler.transform(noStringDf)
+    featurizedData.show
+
+    val arrfields = df.schema.fields filter {
+      x => x.dataType match {
+        case x: org.apache.spark.sql.types.ArrayType => true
+        case _ => false
+      }
+    } map { x => x.name }
+    featurizedData
+    val output = featurizedData.withColumnRenamed("SalePrice", "label")
     val classificationDF = output.select("label", "features")
     classificationDF.show
-
-    val training = spark.read.format("libsvm").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/sample_libsvm_data.txt")
-
 
     val lr = new LogisticRegression()
       .setMaxIter(100)
