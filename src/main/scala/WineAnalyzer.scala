@@ -2,6 +2,7 @@ import java.util.Calendar
 
 import org.apache.spark.ml.classification.{BinaryLogisticRegressionSummary, LogisticRegression}
 import org.apache.spark.ml.feature.{LabeledPoint, VectorAssembler}
+import org.apache.spark.ml.regression.LinearRegression
 import org.apache.spark.mllib.classification.LogisticRegressionWithLBFGS
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.sql.types.{DoubleType, StructField, StructType}
@@ -48,17 +49,17 @@ object WineAnalyzer {
     val classificationDF = output.select("label", "features")
     classificationDF.show
 
-    val lr = new LogisticRegression()
-      .setMaxIter(100)
-      .setRegParam(0.3)
-      .setElasticNetParam(0.8)
+    val lr = new LinearRegression()
 
     // Fit the model
-    val lrModel = lr.fit(output)
-
-    // Print the coefficients and intercept for multinomial logistic regression
-    println(s"Coefficients: \n${lrModel.coefficientMatrix}")
-    println(s"Intercepts: ${lrModel.interceptVector}")
+    val lrModel = lr.fit(classificationDF)
+//
+//    // Print the coefficients and intercept for multinomial logistic regression
+    println(
+      s"\n${lrModel.coefficients}" +
+      s"\n${lrModel.intercept}" +
+      s"\n${lrModel.summary.totalIterations}" +
+      s"MSE: \n${lrModel.summary.meanSquaredError}")
 
   }
 }
