@@ -7,12 +7,12 @@ import org.apache.spark.ml.feature.{LabeledPoint, VectorAssembler, VectorIndexer
 import org.apache.spark.ml.regression.{DecisionTreeRegressionModel, DecisionTreeRegressor, LinearRegression, RandomForestRegressor}
 import org.apache.spark.mllib.classification.LogisticRegressionWithLBFGS
 import org.apache.spark.mllib.util.MLUtils
-import org.apache.spark.sql.types.{IntegerType, IntegerType, StructField, StructType}
+import org.apache.spark.sql.types.{IntegerType, StructField, StructType}
 import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.functions.max
 import org.apache.log4j.{Level, Logger}
 
-object WineAnalyzer {
+object HousingAnalyzer {
 
   def main(args: Array[String]): Unit = {
     Logger.getLogger("org").setLevel(Level.INFO)
@@ -24,6 +24,7 @@ object WineAnalyzer {
       .getOrCreate()
 
     val featureSchema = StructType(Array(
+      StructField("Id", IntegerType, true),
       StructField("MSSubClass", IntegerType, true),
       StructField("LotArea", IntegerType, true),
       StructField("OverallQual", IntegerType, true),
@@ -62,7 +63,6 @@ object WineAnalyzer {
     val rawTestData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/test.csv").na.drop
 
     val noStringTrainingDf = rawTrainingData.select("SalePrice","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
-    noStringTrainingDf.show()
     val featureColumns = Array("MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
     val labelColumn = "SalePrice"
 
@@ -75,15 +75,14 @@ object WineAnalyzer {
 
     val output = featurizedTrainingData.withColumnRenamed("SalePrice", "label")
     val processedTrainingData = output.select("label", "features")
-    processedTrainingData.show
 
-    val testDataForFeaturization = rawTestData.select("Id","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MiscVal","MoSold","YrSold")
+    val testDataForCasting = rawTestData.select("Id","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold").rdd
+    val testDataForFeaturization = spark.createDataFrame(testDataForCasting, featureSchema)
     testDataForFeaturization.show
-    val featurizedTestData = assembler.transform(testDataForFeaturization)
-    featurizedTestData.show()
-    val processedTestData = featurizedTestData.withColumnRenamed("Id", "label").select("label","features")
-    processedTestData.show()
-
+//    val featurizedTestData = assembler.transform(testDataForFeaturization)
+//    featurizedTestData.show()
+//    val processedTestData = featurizedTestData.withColumnRenamed("Id", "label").select("label","features")
+//    processedTestData.show()
     //    val testData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/test.csv").na.drop
     //
 
@@ -108,48 +107,48 @@ object WineAnalyzer {
     //    val processedTestData = testoutput.select("label", "features")
     //    processedTestData.show
 
-    val Array(trainingSplitData1, trainingSplitData2) = processedTrainingData.randomSplit(Array(0.7, 0.3))
-
-    // model building
-    val featureIndexer = new VectorIndexer()
-      .setInputCol("features")
-      .setOutputCol("indexedFeatures")
-      .setMaxCategories(4)
-      .fit(processedTrainingData)
-
-    // Train a DecisionTree model.
-    val dt = new RandomForestRegressor()
-      .setLabelCol("label")
-      .setFeaturesCol("indexedFeatures")
-
-    // Chain indexer and tree in a Pipeline.
-    val pipeline = new Pipeline()
-      .setStages(Array(featureIndexer, dt))
-
-
-    // Train model. This also runs the indexer.
-    val model = pipeline.fit(trainingSplitData1)
-
-    processedTestData.rdd.saveAsTextFile(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString)
-    // Make predictions.
-    val Array(testSplitData1, testSplitData2) = processedTestData.randomSplit(Array(0.1, 0.9))
-
-    testSplitData1.show
-    val predictions = model.transform(testSplitData1)
-
-    // Select example rows to display.
-    predictions.show
-
-    // Select (prediction, true label) and compute test error.
-    val evaluator = new RegressionEvaluator()
-      .setLabelCol("label")
-      .setPredictionCol("prediction")
-      .setMetricName("rmse")
-    val rmse = evaluator.evaluate(predictions)
-    println("Root Mean Squared Error (RMSE) on test data = " + rmse)
-
-    val treeModel = model.stages(1).asInstanceOf[DecisionTreeRegressionModel]
-    println("Learned regression tree model:\n" + treeModel.toDebugString)
+//    val Array(trainingSplitData1, trainingSplitData2) = processedTrainingData.randomSplit(Array(0.7, 0.3))
+//
+//    // model building
+//    val featureIndexer = new VectorIndexer()
+//      .setInputCol("features")
+//      .setOutputCol("indexedFeatures")
+//      .setMaxCategories(4)
+//      .fit(processedTrainingData)
+//
+//    // Train a DecisionTree model.
+//    val dt = new RandomForestRegressor()
+//      .setLabelCol("label")
+//      .setFeaturesCol("indexedFeatures")
+//
+//    // Chain indexer and tree in a Pipeline.
+//    val pipeline = new Pipeline()
+//      .setStages(Array(featureIndexer, dt))
+//
+//
+//    // Train model. This also runs the indexer.
+//    val model = pipeline.fit(trainingSplitData1)
+//
+//    processedTestData.rdd.saveAsTextFile(System.getProperty("user.dir") + "/spark-output/" + Calendar.getInstance().getTime.toString)
+//    // Make predictions.
+//    val Array(testSplitData1, testSplitData2) = processedTestData.randomSplit(Array(0.1, 0.9))
+//
+//    testSplitData1.show
+//    val predictions = model.transform(testSplitData1)
+//
+//    // Select example rows to display.
+//    predictions.show
+//
+//    // Select (prediction, true label) and compute test error.
+//    val evaluator = new RegressionEvaluator()
+//      .setLabelCol("label")
+//      .setPredictionCol("prediction")
+//      .setMetricName("rmse")
+//    val rmse = evaluator.evaluate(predictions)
+//    println("Root Mean Squared Error (RMSE) on test data = " + rmse)
+//
+//    val treeModel = model.stages(1).asInstanceOf[DecisionTreeRegressionModel]
+//    println("Learned regression tree model:\n" + treeModel.toDebugString)
 
   }
 }
