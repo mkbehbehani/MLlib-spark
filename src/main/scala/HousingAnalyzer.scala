@@ -22,7 +22,7 @@ object HousingAnalyzer {
     val nullCorrectedTrainingDf = countFeaturesTrainingDF.na.fill(countFeaturesTrainingDF.columns.zip(
       countFeaturesTrainingDF.select(countFeaturesTrainingDF.columns.map(mean): _*).first.toSeq
     ).toMap)
-    val featureColumns = Array("MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
+    val featureColumns = Array("LotArea","1stFlrSF","2ndFlrSF")
     val labelColumn = "SalePrice"
 
     val assembler = new VectorAssembler()
@@ -121,11 +121,14 @@ object HousingAnalyzer {
     println("Root Mean Squared Error (RMSE) on GBT model test data = " + rmse)
 
     val gbtModel = model.stages(0).asInstanceOf[GBTRegressionModel]
+
+
+
     println("Learned regression GBT model:\n" + gbtModel.toDebugString)
 
-    println("Root Mean Squared Error (RMSE) on decision tree test data = " + rmse2)
-    println("Root Mean Squared Error (RMSE) on RandomForestRegressor test data = " + RFrmse)
-    println("Root Mean Squared Error (RMSE) on GBT model test data = " + rmse)
+    println("Decision Tree RMSE = " + rmse2)
+    println("RandomForestRegressor RMSE = " + RFrmse)
+    println("Gradient-boosted Tree RMSE = " + rmse)
 
   }
 }
