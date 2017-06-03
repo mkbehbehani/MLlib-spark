@@ -1,3 +1,5 @@
+import java.util.Calendar
+
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
@@ -27,7 +29,7 @@ object HousingAnalyzer {
     val nullCorrectedTestDf = countFeaturesTestDF.na.fill(countFeaturesTestDF.columns.zip(
       countFeaturesTestDF.select(countFeaturesTestDF.columns.map(mean): _*).first.toSeq
     ).toMap)
-    val featureColumns = Array("LotArea","1stFlrSF","2ndFlrSF")
+    val featureColumns = Array("LotArea","1stFlrSF","2ndFlrSF","YearBuilt")
     val labelColumn = "SalePrice"
 
     val assembler = new VectorAssembler()
@@ -60,7 +62,7 @@ object HousingAnalyzer {
     val predictions2 = model2.transform(testData)
 
     // Select example rows to display.
-    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv("sample_file.csv")
+    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv(System.getProperty("user.dir") + "/housing-predictions/" + Calendar.getInstance().getTime.toString)
     // Select (prediction, true label) and compute test error.
 //    val evaluator2 = new RegressionEvaluator()
 //      .setLabelCol("label")
@@ -138,4 +140,3 @@ object HousingAnalyzer {
 
   }
 }
-// scalastyle:on println
