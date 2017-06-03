@@ -18,12 +18,12 @@ object HousingAnalyzer {
     val rawTrainingData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/train.csv")
     val rawTestData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/test.csv")
 
-    val countFeaturesTrainingDF = rawTrainingData.select("SalePrice","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
+    val countFeaturesTrainingDF = rawTrainingData.select("Id","SalePrice","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
     val nullCorrectedTrainingDf = countFeaturesTrainingDF.na.fill(countFeaturesTrainingDF.columns.zip(
       countFeaturesTrainingDF.select(countFeaturesTrainingDF.columns.map(mean): _*).first.toSeq
     ).toMap)
 
-    val countFeaturesTestDF = rawTestData.select("MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
+    val countFeaturesTestDF = rawTestData.select("Id","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
     val nullCorrectedTestDf = countFeaturesTestDF.na.fill(countFeaturesTestDF.columns.zip(
       countFeaturesTestDF.select(countFeaturesTestDF.columns.map(mean): _*).first.toSeq
     ).toMap)
@@ -34,8 +34,10 @@ object HousingAnalyzer {
       .setInputCols(featureColumns)
       .setOutputCol("features")
 
-    val processedTrainingData = assembler.transform(nullCorrectedTrainingDf).select("SalePrice", "features")
-    val processedTestData = assembler.transform(nullCorrectedTestDf).select("features")
+    val processedTrainingData = assembler.transform(nullCorrectedTrainingDf).select("Id","SalePrice", "features")
+    val processedTestData = assembler.transform(nullCorrectedTestDf).select("Id","features")
+    processedTrainingData.show(3)
+    processedTestData.show(3)
 
     val trainingData = processedTrainingData
     val testData = processedTestData
