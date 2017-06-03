@@ -60,17 +60,16 @@ object HousingAnalyzer {
     val predictions2 = model2.transform(testData)
 
     // Select example rows to display.
-    predictions2.show(100)
-
+    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv("sample_file.csv")
     // Select (prediction, true label) and compute test error.
-    val evaluator2 = new RegressionEvaluator()
-      .setLabelCol("SalePrice")
-      .setPredictionCol("prediction")
-      .setMetricName("rmse")
-    val rmse2 = evaluator2.evaluate(predictions2)
-
-    val treeModel = model2.stages(0).asInstanceOf[DecisionTreeRegressionModel]
-    println("Learned regression tree model:\n" + treeModel.toDebugString)
+//    val evaluator2 = new RegressionEvaluator()
+//      .setLabelCol("label")
+//      .setPredictionCol("prediction")
+//      .setMetricName("rmse")
+//    val rmse2 = evaluator2.evaluate(predictions2)
+//
+//    val treeModel = model2.stages(0).asInstanceOf[DecisionTreeRegressionModel]
+//    println("Learned regression tree model:\n" + treeModel.toDebugString)
 
     // Train a RandomForest model.
 //    val rf = new RandomForestRegressor()
@@ -133,7 +132,7 @@ object HousingAnalyzer {
 //
 //    println("Learned regression GBT model:\n" + gbtModel.toDebugString)
 //
-    println("Decision Tree RMSE = " + rmse2)
+//    println("Decision Tree RMSE = " + rmse2)
 //    println("RandomForestRegressor RMSE = " + RFrmse)
 //    println("Gradient-boosted Tree RMSE = " + rmse)
 
