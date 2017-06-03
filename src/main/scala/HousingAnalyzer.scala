@@ -1,9 +1,9 @@
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.VectorAssembler
-import org.apache.spark.ml.regression.{DecisionTreeRegressionModel, DecisionTreeRegressor, RandomForestRegressionModel, RandomForestRegressor, GBTRegressionModel, GBTRegressor}
+import org.apache.spark.ml.regression._
 import org.apache.spark.sql.SparkSession
-import org.apache.spark.sql.functions.mean
+import org.apache.spark.sql.functions._
 
 object HousingAnalyzer {
 
@@ -22,6 +22,11 @@ object HousingAnalyzer {
     val nullCorrectedTrainingDf = countFeaturesTrainingDF.na.fill(countFeaturesTrainingDF.columns.zip(
       countFeaturesTrainingDF.select(countFeaturesTrainingDF.columns.map(mean): _*).first.toSeq
     ).toMap)
+
+    val countFeaturesTestDF = rawTestData.select("MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
+    val nullCorrectedTestDf = countFeaturesTestDF.na.fill(countFeaturesTestDF.columns.zip(
+      countFeaturesTestDF.select(countFeaturesTestDF.columns.map(mean): _*).first.toSeq
+    ).toMap)
     val featureColumns = Array("LotArea","1stFlrSF","2ndFlrSF")
     val labelColumn = "SalePrice"
 
@@ -29,16 +34,16 @@ object HousingAnalyzer {
       .setInputCols(featureColumns)
       .setOutputCol("features")
 
-    val featurizedTrainingData = assembler.transform(nullCorrectedTrainingDf)
+    val processedTrainingData = assembler.transform(nullCorrectedTrainingDf).select("SalePrice", "features")
+    val processedTestData = assembler.transform(nullCorrectedTestDf).select("features")
 
-    val output = featurizedTrainingData.withColumnRenamed("SalePrice", "label")
-    val processedTrainingData = output.select("label", "features")
-
-    val Array(trainingData, testData) = processedTrainingData.randomSplit(Array(0.8, 0.2))
+    val trainingData = processedTrainingData
+    val testData = processedTestData
+//    val Array(trainingData, testData) = processedTrainingData.randomSplit(Array(0.8, 0.2))
 
     // Train a DecisionTree model.
     val dt = new DecisionTreeRegressor()
-      .setLabelCol("label")
+      .setLabelCol("SalePrice")
       .setFeaturesCol("features")
 
     // Chain indexer and tree in a Pipeline.
@@ -57,7 +62,7 @@ object HousingAnalyzer {
 
     // Select (prediction, true label) and compute test error.
     val evaluator2 = new RegressionEvaluator()
-      .setLabelCol("label")
+      .setLabelCol("SalePrice")
       .setPredictionCol("prediction")
       .setMetricName("rmse")
     val rmse2 = evaluator2.evaluate(predictions2)
@@ -66,69 +71,69 @@ object HousingAnalyzer {
     println("Learned regression tree model:\n" + treeModel.toDebugString)
 
     // Train a RandomForest model.
-    val rf = new RandomForestRegressor()
-      .setLabelCol("label")
-      .setFeaturesCol("features")
-
-    // Chain indexer and forest in a Pipeline.
-    val rfPipeline = new Pipeline()
-      .setStages(Array(rf))
-
-    // Train model. This also runs the indexer.
-    val rfFittedModel = rfPipeline.fit(trainingData)
-
-    // Make predictions.
-    val rfPredictions = rfFittedModel.transform(testData)
-
-    // Select example rows to display.
-    rfPredictions.select("prediction", "label", "features").show(5)
-
-    // Select (prediction, true label) and compute test error.
-    val rfevaluator = new RegressionEvaluator()
-      .setLabelCol("label")
-      .setPredictionCol("prediction")
-      .setMetricName("rmse")
-    val RFrmse = rfevaluator.evaluate(rfPredictions)
-
-    val rfModel = rfFittedModel.stages(0).asInstanceOf[RandomForestRegressionModel]
-    println("Learned regression forest model:\n" + rfModel.toDebugString)
-
-    // Train a GBT model.
-    val gbt = new GBTRegressor()
-      .setLabelCol("label")
-      .setFeaturesCol("features")
-      .setMaxIter(10)
-
-    // Chain indexer and GBT in a Pipeline.
-    val pipeline = new Pipeline()
-      .setStages(Array(gbt))
-
-    // Train model. This also runs the indexer.
-    val model = pipeline.fit(trainingData)
-
-    // Make predictions.
-    val predictions = model.transform(testData)
-
-    // Select example rows to display.
-    predictions.select("prediction", "label", "features").show(5)
-
-    // Select (prediction, true label) and compute test error.
-    val evaluator = new RegressionEvaluator()
-      .setLabelCol("label")
-      .setPredictionCol("prediction")
-      .setMetricName("rmse")
-    val rmse = evaluator.evaluate(predictions)
-    println("Root Mean Squared Error (RMSE) on GBT model test data = " + rmse)
-
-    val gbtModel = model.stages(0).asInstanceOf[GBTRegressionModel]
-
-
-
-    println("Learned regression GBT model:\n" + gbtModel.toDebugString)
-
+//    val rf = new RandomForestRegressor()
+//      .setLabelCol("SalePrice")
+//      .setFeaturesCol("features")
+//
+//    // Chain indexer and forest in a Pipeline.
+//    val rfPipeline = new Pipeline()
+//      .setStages(Array(rf))
+//
+//    // Train model. This also runs the indexer.
+//    val rfFittedModel = rfPipeline.fit(trainingData)
+//
+//    // Make predictions.
+//    val rfPredictions = rfFittedModel.transform(testData)
+//
+//    // Select example rows to display.
+//    rfPredictions.select("prediction", "SalePrice", "features").show(5)
+//
+//    // Select (prediction, true label) and compute test error.
+//    val rfevaluator = new RegressionEvaluator()
+//      .setLabelCol("SalePrice")
+//      .setPredictionCol("prediction")
+//      .setMetricName("rmse")
+//    val RFrmse = rfevaluator.evaluate(rfPredictions)
+//
+//    val rfModel = rfFittedModel.stages(0).asInstanceOf[RandomForestRegressionModel]
+//    println("Learned regression forest model:\n" + rfModel.toDebugString)
+//
+//    // Train a GBT model.
+//    val gbt = new GBTRegressor()
+//      .setLabelCol("SalePrice")
+//      .setFeaturesCol("features")
+//      .setMaxIter(10)
+//
+//    // Chain indexer and GBT in a Pipeline.
+//    val pipeline = new Pipeline()
+//      .setStages(Array(gbt))
+//
+//    // Train model. This also runs the indexer.
+//    val model = pipeline.fit(trainingData)
+//
+//    // Make predictions.
+//    val predictions = model.transform(testData)
+//
+//    // Select example rows to display.
+//    predictions.select("prediction", "SalePrice", "features").show(5)
+//
+//    // Select (prediction, true label) and compute test error.
+//    val evaluator = new RegressionEvaluator()
+//      .setLabelCol("SalePrice")
+//      .setPredictionCol("prediction")
+//      .setMetricName("rmse")
+//    val rmse = evaluator.evaluate(predictions)
+//    println("Root Mean Squared Error (RMSE) on GBT model test data = " + rmse)
+//
+//    val gbtModel = model.stages(0).asInstanceOf[GBTRegressionModel]
+//
+//
+//
+//    println("Learned regression GBT model:\n" + gbtModel.toDebugString)
+//
     println("Decision Tree RMSE = " + rmse2)
-    println("RandomForestRegressor RMSE = " + RFrmse)
-    println("Gradient-boosted Tree RMSE = " + rmse)
+//    println("RandomForestRegressor RMSE = " + RFrmse)
+//    println("Gradient-boosted Tree RMSE = " + rmse)
 
   }
 }
