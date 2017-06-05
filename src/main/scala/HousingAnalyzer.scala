@@ -30,17 +30,48 @@ object HousingAnalyzer {
     import spark.implicits._
     val trainingSchema = StructType(Array(
       StructField("Id", IntegerType, true),
-      StructField("SalePrice", IntegerType, true),
       StructField("MSSubClass", IntegerType, true),
+      StructField("MSZoning", StringType, true),
+      StructField("LotFrontage", IntegerType, true),
       StructField("LotArea", IntegerType, true),
+      StructField("Street", StringType, true),
+      StructField("Alley", StringType, true),
+      StructField("LotShape", StringType, true),
+      StructField("LandContour", StringType, true),
+      StructField("Utilities", StringType, true),
+      StructField("LotConfig", StringType, true),
+      StructField("LandSlope", StringType, true),
+      StructField("Neighborhood", StringType, true),
+      StructField("Condition1", StringType, true),
+      StructField("Condition2", StringType, true),
+      StructField("BldgType", StringType, true),
+      StructField("HouseStyle", StringType, true),
       StructField("OverallQual", IntegerType, true),
       StructField("OverallCond", IntegerType, true),
       StructField("YearBuilt", IntegerType, true),
       StructField("YearRemodAdd", IntegerType, true),
+      StructField("RoofStyle", StringType, true),
+      StructField("RoofMatl", StringType, true),
+      StructField("Exterior1st", StringType, true),
+      StructField("Exterior2nd", StringType, true),
+      StructField("MasVnrType", StringType, true),
+      StructField("MasVnrArea", StringType, true),
+      StructField("ExterQual", StringType, true),
+      StructField("ExterCond", StringType, true),
+      StructField("Foundation", StringType, true),
+      StructField("BsmtQual", StringType, true),
+      StructField("BsmtCond", StringType, true),
+      StructField("BsmtExposure", StringType, true),
+      StructField("BsmtFinType1", StringType, true),
       StructField("BsmtFinSF1", IntegerType, true),
+      StructField("BsmtFinType2", StringType, true),
       StructField("BsmtFinSF2", IntegerType, true),
       StructField("BsmtUnfSF", IntegerType, true),
       StructField("TotalBsmtSF", IntegerType, true),
+      StructField("Heating", StringType, true),
+      StructField("HeatingQC", StringType, true),
+      StructField("CentralAir", StringType, true),
+      StructField("Electrical", StringType, true),
       StructField("1stFlrSF", IntegerType, true),
       StructField("2ndFlrSF", IntegerType, true),
       StructField("LowQualFinSF", IntegerType, true),
@@ -51,138 +82,123 @@ object HousingAnalyzer {
       StructField("HalfBath", IntegerType, true),
       StructField("BedroomAbvGr", IntegerType, true),
       StructField("KitchenAbvGr", IntegerType, true),
+      StructField("KitchenQual", StringType, true),
       StructField("TotRmsAbvGrd", IntegerType, true),
+      StructField("Functional", StringType, true),
       StructField("Fireplaces", IntegerType, true),
+      StructField("FireplaceQu", StringType, true),
+      StructField("GarageType", StringType, true),
+      StructField("GarageYrBlt", IntegerType, true),
+      StructField("GarageFinish", StringType, true),
       StructField("GarageCars", IntegerType, true),
       StructField("GarageArea", IntegerType, true),
+      StructField("GarageQual", StringType, true),
+      StructField("GarageCond", StringType, true),
+      StructField("PavedDrive", StringType, true),
       StructField("WoodDeckSF", IntegerType, true),
       StructField("OpenPorchSF", IntegerType, true),
       StructField("EnclosedPorch", IntegerType, true),
       StructField("3SsnPorch", IntegerType, true),
       StructField("ScreenPorch", IntegerType, true),
       StructField("PoolArea", IntegerType, true),
+      StructField("PoolQC", StringType, true),
+      StructField("Fence", StringType, true),
+      StructField("MiscFeature", StringType, true),
+      StructField("MiscVal", IntegerType, true),
       StructField("MoSold", IntegerType, true),
-      StructField("YrSold", IntegerType, true)
+      StructField("YrSold", IntegerType, true),
+      StructField("SaleType", StringType, true),
+      StructField("SaleCondition", StringType, true),
+      StructField("SalePrice", IntegerType, true)
     ))
 
-    StructField("Id,", IntegerType, true)
-    StructField("MSSubClass,", IntegerType, true)
-    StructField("MSZoning,", StringType, true)
-    StructField("LotFrontage,", IntegerType, true)
-    StructField("LotArea,", IntegerType, true)
-    StructField("Street,", StringType, true)
-    StructField("Alley,", StringType, true)
-    StructField("LotShape,", StringType, true)
-    StructField("LandContour,", StringType, true)
-    StructField("Utilities,", StringType, true)
-    StructField("LotConfig,", StringType, true)
-    StructField("LandSlope,", StringType, true)
-    StructField("Neighborhood,", StringType, true)
-    StructField("Condition1,", StringType, true)
-    StructField("Condition2,", StringType, true)
-    StructField("BldgType,", StringType, true)
-    StructField("HouseStyle,", StringType, true)
-    StructField("OverallQual,", IntegerType, true)
-    StructField("OverallCond,", IntegerType, true)
-    StructField("YearBuilt,", IntegerType, true)
-    StructField("YearRemodAdd,", IntegerType, true)
-    StructField("RoofStyle,", StringType, true)
-    StructField("RoofMatl,", StringType, true)
-    StructField("Exterior1st,", StringType, true)
-    StructField("Exterior2nd,", StringType, true)
-    StructField("MasVnrType,", StringType, true)
-    StructField("MasVnrArea,", StringType, true)
-    StructField("ExterQual,", StringType, true)
-    StructField("ExterCond,", StringType, true)
-    StructField("Foundation,", StringType, true)
-    StructField("BsmtQual,", StringType, true)
-    StructField("BsmtCond,", StringType, true)
-    StructField("BsmtExposure,", StringType, true)
-    StructField("BsmtFinType1,", StringType, true)
-    StructField("BsmtFinSF1,", IntegerType, true)
-    StructField("BsmtFinType2,", StringType, true)
-    StructField("BsmtFinSF2,", IntegerType, true)
-    StructField("BsmtUnfSF,", IntegerType, true)
-    StructField("TotalBsmtSF,", IntegerType, true)
-    StructField("Heating,", StringType, true)
-    StructField("HeatingQC,", StringType, true)
-    StructField("CentralAir,", StringType, true)
-    StructField("Electrical,", StringType, true)
-    StructField("1stFlrSF,", IntegerType, true)
-    StructField("2ndFlrSF,", IntegerType, true)
-    StructField("LowQualFinSF,", IntegerType, true)
-    StructField("GrLivArea,", IntegerType, true)
-    StructField("BsmtFullBath,", IntegerType, true)
-    StructField("BsmtHalfBath,", IntegerType, true)
-    StructField("FullBath,", IntegerType, true)
-    StructField("HalfBath,", IntegerType, true)
-    StructField("BedroomAbvGr,", IntegerType, true)
-    StructField("KitchenAbvGr,", IntegerType, true)
-    StructField("KitchenQual,", StringType, true)
-    StructField("TotRmsAbvGrd,", IntegerType, true)
-    StructField("Functional,", StringType, true)
-    StructField("Fireplaces,", IntegerType, true)
-    StructField("FireplaceQu,", StringType, true)
-    StructField("GarageType,", StringType, true)
-    StructField("GarageYrBlt,", IntegerType, true)
-    StructField("GarageFinish,", StringType, true)
-    StructField("GarageCars,", IntegerType, true)
-    StructField("GarageArea,", IntegerType, true)
-    StructField("GarageQual,", StringType, true)
-    StructField("GarageCond,", StringType, true)
-    StructField("PavedDrive,", StringType, true)
-    StructField("WoodDeckSF,", IntegerType, true)
-    StructField("OpenPorchSF,", IntegerType, true)
-    StructField("EnclosedPorch", IntegerType, true),
-    StructField("3SsnPorch,", IntegerType, true)
-    StructField("ScreenPorch,", IntegerType, true)
-    StructField("PoolArea,", IntegerType, true)
-    StructField("PoolQC,", StringType, true)
-    StructField("Fence,", StringType, true)
-    StructField("MiscFeature,", StringType, true)
-    StructField("MiscVal,", IntegerType, true)
-    StructField("MoSold,", IntegerType, true)
-    StructField("YrSold,", IntegerType, true)
-    StructField("SaleType,", StringType, true)
-    StructField("SaleCondition", StringType, true)
+
 
     val testSchema = StructType(Array(
       StructField("Id", IntegerType, true),
-      StructField("MSSubClass", IntegerType, true),
-      StructField("LotArea", IntegerType, true),
-      StructField("OverallQual", IntegerType, true),
-      StructField("OverallCond", IntegerType, true),
-      StructField("YearBuilt", IntegerType, true),
-      StructField("YearRemodAdd", IntegerType, true),
-      StructField("BsmtFinSF1", IntegerType, true),
-      StructField("BsmtFinSF2", IntegerType, true),
-      StructField("BsmtUnfSF", IntegerType, true),
-      StructField("TotalBsmtSF", IntegerType, true),
-      StructField("1stFlrSF", IntegerType, true),
-      StructField("2ndFlrSF", IntegerType, true),
-      StructField("LowQualFinSF", IntegerType, true),
-      StructField("GrLivArea", IntegerType, true),
-      StructField("BsmtFullBath", IntegerType, true),
-      StructField("BsmtHalfBath", IntegerType, true),
-      StructField("FullBath", IntegerType, true),
-      StructField("HalfBath", IntegerType, true),
-      StructField("BedroomAbvGr", IntegerType, true),
-      StructField("KitchenAbvGr", IntegerType, true),
-      StructField("TotRmsAbvGrd", IntegerType, true),
-      StructField("Fireplaces", IntegerType, true),
-      StructField("GarageCars", IntegerType, true),
-      StructField("GarageArea", IntegerType, true),
-      StructField("WoodDeckSF", IntegerType, true),
-      StructField("OpenPorchSF", IntegerType, true),
-      StructField("EnclosedPorch", IntegerType, true),
-      StructField("3SsnPorch", IntegerType, true),
-      StructField("ScreenPorch", IntegerType, true),
-      StructField("PoolArea", IntegerType, true),
-      StructField("MoSold", IntegerType, true),
-      StructField("YrSold", IntegerType, true)
+        StructField("MSSubClass", IntegerType, true),
+        StructField("MSZoning", StringType, true),
+        StructField("LotFrontage", IntegerType, true),
+        StructField("LotArea", IntegerType, true),
+        StructField("Street", StringType, true),
+        StructField("Alley", StringType, true),
+        StructField("LotShape", StringType, true),
+        StructField("LandContour", StringType, true),
+        StructField("Utilities", StringType, true),
+        StructField("LotConfig", StringType, true),
+        StructField("LandSlope", StringType, true),
+        StructField("Neighborhood", StringType, true),
+        StructField("Condition1", StringType, true),
+        StructField("Condition2", StringType, true),
+        StructField("BldgType", StringType, true),
+        StructField("HouseStyle", StringType, true),
+        StructField("OverallQual", IntegerType, true),
+        StructField("OverallCond", IntegerType, true),
+        StructField("YearBuilt", IntegerType, true),
+        StructField("YearRemodAdd", IntegerType, true),
+        StructField("RoofStyle", StringType, true),
+        StructField("RoofMatl", StringType, true),
+        StructField("Exterior1st", StringType, true),
+        StructField("Exterior2nd", StringType, true),
+        StructField("MasVnrType", StringType, true),
+        StructField("MasVnrArea", StringType, true),
+        StructField("ExterQual", StringType, true),
+        StructField("ExterCond", StringType, true),
+        StructField("Foundation", StringType, true),
+        StructField("BsmtQual", StringType, true),
+        StructField("BsmtCond", StringType, true),
+        StructField("BsmtExposure", StringType, true),
+        StructField("BsmtFinType1", StringType, true),
+        StructField("BsmtFinSF1", IntegerType, true),
+        StructField("BsmtFinType2", StringType, true),
+        StructField("BsmtFinSF2", IntegerType, true),
+        StructField("BsmtUnfSF", IntegerType, true),
+        StructField("TotalBsmtSF", IntegerType, true),
+        StructField("Heating", StringType, true),
+        StructField("HeatingQC", StringType, true),
+        StructField("CentralAir", StringType, true),
+        StructField("Electrical", StringType, true),
+        StructField("1stFlrSF", IntegerType, true),
+        StructField("2ndFlrSF", IntegerType, true),
+        StructField("LowQualFinSF", IntegerType, true),
+        StructField("GrLivArea", IntegerType, true),
+        StructField("BsmtFullBath", IntegerType, true),
+        StructField("BsmtHalfBath", IntegerType, true),
+        StructField("FullBath", IntegerType, true),
+        StructField("HalfBath", IntegerType, true),
+        StructField("BedroomAbvGr", IntegerType, true),
+        StructField("KitchenAbvGr", IntegerType, true),
+        StructField("KitchenQual", StringType, true),
+        StructField("TotRmsAbvGrd", IntegerType, true),
+        StructField("Functional", StringType, true),
+        StructField("Fireplaces", IntegerType, true),
+        StructField("FireplaceQu", StringType, true),
+        StructField("GarageType", StringType, true),
+        StructField("GarageYrBlt", IntegerType, true),
+        StructField("GarageFinish", StringType, true),
+        StructField("GarageCars", IntegerType, true),
+        StructField("GarageArea", IntegerType, true),
+        StructField("GarageQual", StringType, true),
+        StructField("GarageCond", StringType, true),
+        StructField("PavedDrive", StringType, true),
+        StructField("WoodDeckSF", IntegerType, true),
+        StructField("OpenPorchSF", IntegerType, true),
+        StructField("EnclosedPorch", IntegerType, true),
+        StructField("3SsnPorch", IntegerType, true),
+        StructField("ScreenPorch", IntegerType, true),
+        StructField("PoolArea", IntegerType, true),
+        StructField("PoolQC", StringType, true),
+        StructField("Fence", StringType, true),
+        StructField("MiscFeature", StringType, true),
+        StructField("MiscVal", IntegerType, true),
+        StructField("MoSold", IntegerType, true),
+        StructField("YrSold", IntegerType, true),
+        StructField("SaleType", StringType, true),
+        StructField("SaleCondition", StringType, true)
     ))
-    val rawTrainingData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/train.csv").limit(2)
-    val rawTestData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("inferSchema", "true").load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/test.csv")
+
+    val rawTrainingData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("nullValue", "NA").schema(trainingSchema).load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/train.csv").limit(2)
+    val rawTestData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("nullValue", "NA").schema(testSchema).load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/test.csv")
 
     val countFeaturesTrainingDF = rawTrainingData.select("Id","SalePrice","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
     val nullCorrectedTrainingDf = countFeaturesTrainingDF.na.fill(countFeaturesTrainingDF.columns.zip(
@@ -203,11 +219,9 @@ object HousingAnalyzer {
       .setInputCols(featureColumns)
       .setOutputCol("features")
 
-    val castTrainingData = spark.createDataFrame(nullCorrectedTrainingDf.rdd, trainingSchema)
-    val castTestData = spark.createDataFrame(nullCorrectedTestDf.rdd, testSchema)
 
-    val featurizedTrainingData = assembler.transform(castTrainingData).select("Id","SalePrice", "features")
-    val featurizedTestData = assembler.transform(castTestData).select("Id","features")
+    val featurizedTrainingData = assembler.transform(nullCorrectedTrainingDf).select("Id","SalePrice", "features")
+    val featurizedTestData = assembler.transform(nullCorrectedTestDf).select("Id","features")
 
 
     val trainingData = featurizedTrainingData
@@ -231,7 +245,7 @@ object HousingAnalyzer {
     val predictions2 = model2.transform(testData)
     predictions2.show(3)
     // Select example rows to display.
-//    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv(System.getProperty("user.dir") + "/housing-predictions/" + Calendar.getInstance().getTime.toString)
+    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv(System.getProperty("user.dir") + "/housing-predictions/" + Calendar.getInstance().getTime.toString)
     // Select (prediction, true label) and compute test error.
 //    val evaluator2 = new RegressionEvaluator()
 //      .setLabelCol("label")
