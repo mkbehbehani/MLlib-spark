@@ -246,6 +246,7 @@ object HousingAnalyzer {
     predictions2.show(3)
     // Select example rows to display.
     predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv(System.getProperty("user.dir") + "/housing-predictions/" + Calendar.getInstance().getTime.toString)
+
     // Select (prediction, true label) and compute test error.
 //    val evaluator2 = new RegressionEvaluator()
 //      .setLabelCol("label")
