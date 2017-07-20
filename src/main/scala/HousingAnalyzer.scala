@@ -239,10 +239,13 @@ object HousingAnalyzer {
 
     // Make predictions.
     val predictions2 = model2.transform(testData)
-    predictions2.show(3)
-    // Select example rows to display.
-    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv(System.getProperty("user.dir") + "/housing-predictions/" + Calendar.getInstance().getTime.toString)
 
+    // Select example rows to display.
+    val outputFile = System.getProperty("user.dir") + "/housing-predictions/" + Calendar.getInstance().getTime.toString
+    predictions2.withColumnRenamed("prediction", "SalePrice").select("Id","SalePrice").coalesce(1).write.option("header", "true").csv(outputFile)
+    predictions2.show(50)
+    println("Prediction output exported as " + outputFile + ".csv")
+    spark.stop()
     // Select (prediction, true label) and compute test error.
 //    val evaluator2 = new RegressionEvaluator()
 //      .setLabelCol("label")
