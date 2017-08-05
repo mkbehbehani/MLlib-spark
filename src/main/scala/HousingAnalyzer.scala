@@ -196,9 +196,9 @@ object HousingAnalyzer {
         StructField("SaleType", StringType, true),
         StructField("SaleCondition", StringType, true)
     ))
-
-    val rawTrainingData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("nullValue", "NA").schema(trainingSchema).load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/train.csv")
-    val rawTestData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("nullValue", "NA").schema(testSchema).load("/home/mashallah/IdeaProjects/MLlib-spark/source-data/test.csv")
+    val srcDataDir = System.getProperty("user.dir") + "/source-data/"
+    val rawTrainingData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("nullValue", "NA").schema(trainingSchema).load(srcDataDir + "train.csv")
+    val rawTestData = spark.read.format("com.databricks.spark.csv").option("delimiter", ",").option("header", "true").option("nullValue", "NA").schema(testSchema).load(srcDataDir + "test.csv")
 
     val countFeaturesTrainingDF = rawTrainingData.select("Id","SalePrice","MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
     val nullCorrectedTrainingDf = countFeaturesTrainingDF.na.fill(0)
