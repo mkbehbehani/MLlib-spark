@@ -1,4 +1,4 @@
-name := "spark-machine-learning-scala"
+name := "spark-advanced-regression-kaggle"
 
 version := "1.0"
 
