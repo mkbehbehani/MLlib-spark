@@ -32,17 +32,6 @@ object HousingAnalyzer {
 
     val dataExtractor = new DataExtractor(srcDataDir, spark)
 
-    val featureColumns = Array("MSSubClass","LotArea","OverallQual","OverallCond","YearBuilt","YearRemodAdd","BsmtFinSF1","BsmtFinSF2","BsmtUnfSF","TotalBsmtSF","1stFlrSF","2ndFlrSF","LowQualFinSF","GrLivArea","BsmtFullBath","BsmtHalfBath","FullBath","HalfBath","BedroomAbvGr","KitchenAbvGr","TotRmsAbvGrd","Fireplaces","GarageCars","GarageArea","WoodDeckSF","OpenPorchSF","EnclosedPorch","3SsnPorch","ScreenPorch","PoolArea","MoSold","YrSold")
-    val labelColumn = "SalePrice"
-
-    val assembler = new VectorAssembler()
-      .setInputCols(featureColumns)
-      .setOutputCol("features")
-
-    val featurizedTrainingData = assembler.transform(dataExtractor.trainingData).select("Id","SalePrice", "features")
-    val featurizedTestData = assembler.transform(dataExtractor.testData).select("Id","features")
-
-
     val trainingData = featurizedTrainingData
     val testData = featurizedTestData
 //    val Array(trainingData, testData) = featurizedTrainingData.randomSplit(Array(0.8, 0.2))
